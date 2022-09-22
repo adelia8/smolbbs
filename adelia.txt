@@ -1,7 +1,90 @@
+{"users":[{"id":"0","lastpost":0,"blacklist":"0"}]}
+////////////////
 <?php
 include "config.php";
 date_default_timezone_set($setting_time_zone);
- print '<h1><a href="./"><<< </a></h1>';
+if (isset($_POST['adminpass'])){
+$password = $_POST['adminpass'];
+} else {
+	die("<div class=post><h1>No password was set.</h1></div>");
+}
+
+If ($password != $setting_admin_pass) {
+	die("<div class=post><h1>Wrong password. Go away.</h1></div>");
+}
+
+if (isset($_POST['action'])){
+	$action = $_POST['action'];
+	if (isset($_POST['text'])){
+		$text = $_POST['text'];
+	} else {
+		die("<div class=post><h1>Text isn't set.</h1></div>");
+	}
+} else {
+	$action = 'view';
+	print "<div class=post><h1>Warning:</h1>No action was chosen previously, or you've only opened this page.</div>";
+}
+if ($action == 'delpost'){
+	$board_json = file_get_contents("el.json");
+	$board_list = json_decode($board_json, true);
+	$board_id_list = array_column($board_list['posts'], 'id');
+	$post_place = array_search($text, $board_id_list); 
+	$board_list['posts'][$post_place]['text'] = $setting_deleted_msg;
+	$new_board_json = json_encode($board_list, true);
+	file_put_contents("el.json", $new_board_json);
+	die("<div class=post><h1>Deleted post #$text</h1>");
+}
+
+if ($action == 'reveal'){
+	$decrypt_ip = openssl_decrypt($text, $crypt_cipher, $setting_admin_key, $crypt_options, $crypt_iv);
+	die("<div class=post><h1>IP reveal</h1>User ID <b>$text</b> has IP <b>$decrypt_ip</b></div>");
+}
+print "<form action='admin.php' method='post'>"; 
+print "<div class='post'><b>Delete post</b><br><input type='radio' name='action' value='delpost'><br> Input Post ID below</div>"; 
+print "<div class='post'><b>Input: </b><input type='text' name='text' maxlength='64'><br><b>Admin pass:</b><br><input required type='password' name='adminpass' maxlength='32'><br><input type='submit' value='Submit'></div>";
+
+?>
+</html>
+////////////////////
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<style>
+body {width: 56rem; max-width: 96%; margin: auto; background: #eef2ff; color: #000; font-family: arial,helvetica,sans-serif; font-size: 0.9em;}
+h1 {color: #af0a0f; margin-bottom: 0.1em;}
+hr {border: 1px solid #b7c5d9;}
+a {color: #34345c; text-decoration: underline;}
+a:hover { color: #fb4934; text-decoration: bold; }
+.newpost table, th, td { background: #98e; border: 1px #000 solid; padding: 2px; text-align: left; font-weight: bold;}
+div.post {background-color: #d6daf0; padding: 0.25em 1em 0.25em 1em; margin-top: 0.25em; margin-bottom: 0.25em; border: 1px solid #b7c5d9;}
+.deleted { text-align: left; color: #800000; font-size: 12pt; font-weight: bold;}
+.info { color: #0f0c5d; font-size: 12pt; }
+.poster { padding: 0 5px; border-radius: 3px; text-shadow: 2px 2px #000000; color:#FFFFFF}
+</style></head>
+<?php
+$setting_board_name = '2am';			# Name of this textboard
+$setting_board_title = "<h1> Testing Board</h1>";	# In-line HTML that shows on top of the board
+$setting_admin_pass = 'a333';	 		# Admin pass (CHANGE THIS)
+$setting_admin_key = 'ff5g95jg95nt5dw';			# Encryption key for sensitive data (CHANGE THIS)
+$setting_time_zone = 'America/New_York';	# Time zone
+$setting_board_flow = '1';					# 0 = Oldest posts on top, read top to bottom - 1 = Newest posts on top, read bottom to top
+$setting_usercodes = '0'; 					# Allow users to register their names per IP address
+$setting_maxchar = '2000';					# Maximum post length permitted
+$setting_minchar = '1';					# Minimum post length permitted
+$setting_post_wait = '6';					# Seconds a poster must wait before posting again
+$setting_wrong_penalty = '6';				# Seconds a poster must wait after getting math wrong
+$setting_deleted_msg = "<span class=deleted>THIS POST WAS DELETED.</span>";
+$setting_static_div = "cag"; 				# Name of the CSS div for static content (never moves or changes)
+$setting_footer_content = "</div><br><br><br><a href='./'>[Home]</a> <br><br><br>";
+?>
+///////////////////////////////////////////
+{"posts":[{"id":0,"user":"0","name":"2am","verified":"0","time":"1653512771","text":"\u003Cspan class=deleted\u003E2am.\u003C\/span\u003E"}],"id":0}
+/////////////////
+
+
+<?php
+include "config.php";
+date_default_timezone_set($setting_time_zone);
+ print '<h1><a href="./">[Home]</a></h1>';
  if (isset($_POST['mode'])){
 	$mode = $_POST['mode'];
 } else {
@@ -139,10 +222,64 @@ $post_id = $display_post['id'];
 		echo "<div class='post'><span class=info>#$post_id <b>$post_name</b> $name_splash : </span><br>$post_text</div> \n \n";
 		echo "<br>";
 	}
-    print "<div class=$setting_static_div>$total_posts posts total<br><br><a href='index.php'>10</a> - <a href='index.php?m=25'>25</a> - <a href='index.php?m=50'>50</a> - <a href='index.php?m=100'>100</a> - <a href='index.php?m=250'>250</a> - <a href='index.php?m=500'>500</a></div>";
+    print "<div class=$setting_static_div>$total_posts posts total<br><b>Amount of posts to display</b><br><a href='index.php'>10</a> - <a href='index.php?m=25'>25</a> - <a href='index.php?m=50'>50</a> - <a href='index.php?m=100'>100</a> - <a href='index.php?m=250'>250</a> - <a href='index.php?m=500'>500</a></div>";
 	print "</div><footer>$setting_footer_content";
 }
 
 ?>
 </footer>
 </html>
+///////////////////////////
+<?php
+echo "<form action='admin.php' method='post'>
+<input required type='password' name='adminpass' maxlength='32'><input type='submit' value='Admin'> 
+</form>";
+?>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
